@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MINIVITA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@200;300;400&family=Barlow+Condensed:wght@100;200;300;400&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --white: #ffffff;
+    --ice:   #f3f7fb;
+    --blue0: #e8f0f8;
+    --blue1: #c8ddef;
+    --blue2: #8ab4d4;
+    --blue3: #4a85b0;
+    --blue4: #1d4f72;
+    --dark:  #0d1f2d;
+    --mid:   #7a9ab5;
+    --grey:  #dce8f0;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--white);
+    color: var(--dark);
+    font-family: 'Barlow', sans-serif;
+    font-style: normal;
+    overflow-x: hidden;
+    cursor: crosshair;
+  }
+  em, i { font-style: normal !important; }
+
+  /* ── LANG SWITCHER ── */
+  #lang-switcher {
+    position: fixed;
+    top: 2rem; left: 2.5rem;
+    z-index: 1000;
+    display: flex; gap: 0.5rem;
+    opacity: 0;
+    transition: opacity 0.5s;
+  }
+  #lang-switcher.visible { opacity: 1; }
+  .lang-btn {
+    background: none;
+    border: 1px solid rgba(255,255,255,0.28);
+    color: rgba(255,255,255,0.6);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 300;
+    font-size: 0.6rem;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    padding: 0.42rem 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    backdrop-filter: blur(6px);
+  }
+  .lang-btn:hover, .lang-btn.active {
+    border-color: white; color: white;
+    background: rgba(255,255,255,0.08);
+  }
+  .lang-btn.light { border-color: var(--blue1); color: var(--mid); }
+  .lang-btn.light:hover, .lang-btn.light.active { border-color: var(--blue3); color: var(--blue4); background: none; }
+
+  /* hide/show language content */
+  [data-lang] { display: none; }
+  body.lang-ca [data-lang="ca"] { display: block; }
+  body.lang-ca [data-lang="ca"].inline { display: inline; }
+  body.lang-ca [data-lang="ca"].flex { display: flex; }
+  body.lang-en [data-lang="en"] { display: block; }
+  body.lang-en [data-lang="en"].inline { display: inline; }
+  body.lang-en [data-lang="en"].flex { display: flex; }
+  /* always-visible elements */
+  [data-lang="both"] { display: block; }
+  [data-lang="both"].flex { display: flex; }
+
+  /* ── GATE ── */
+  #gate {
+    position: fixed; inset: 0;
+    background: var(--white);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 9999;
+    transition: opacity 0.9s ease, visibility 0.9s;
+  }
+  #gate.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+
+  .gate-inner { text-align: center; }
+  .gate-mark {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(4rem, 14vw, 9rem);
+    letter-spacing: 0.18em;
+    color: var(--dark); line-height: 1;
+    margin-bottom: 0.3rem;
+    opacity: 0; animation: fadeUp 0.9s ease 0.2s forwards;
+  }
+  .gate-sub {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 200; font-size: 0.72rem;
+    letter-spacing: 0.5em; text-transform: uppercase;
+    color: var(--mid); margin-bottom: 0.6rem;
+    opacity: 0; animation: fadeUp 0.9s ease 0.45s forwards;
+  }
+  .gate-sub-en {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 200; font-size: 0.68rem;
+    letter-spacing: 0.35em;
+    color: var(--blue2); margin-bottom: 3rem;
+    opacity: 0; animation: fadeUp 0.9s ease 0.6s forwards;
+  }
+  .gate-input-wrap {
+    opacity: 0; animation: fadeUp 0.9s ease 0.85s forwards;
+  }
+  #pwd {
+    background: none; border: none;
+    border-bottom: 1px solid var(--blue1); outline: none;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 200; font-size: 1.2rem;
+    letter-spacing: 0.35em; color: var(--dark);
+    text-align: center; width: 220px; padding: 0.6rem 0;
+    transition: border-color 0.3s;
+  }
+  #pwd:focus { border-color: var(--blue3); }
+  #pwd.error { border-color: #b04a4a; animation: shake 0.3s ease; }
+  #pwd::placeholder { color: var(--blue1); }
+  #enter-btn {
+    display: block; margin: 2rem auto 0;
+    background: none; border: none;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 300; font-size: 0.68rem;
+    letter-spacing: 0.48em; text-transform: uppercase;
+    color: var(--mid); cursor: pointer; transition: color 0.3s; padding: 0.5rem;
+  }
+  #enter-btn:hover { color: var(--dark); }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+  }
+
+  /* ── SITE ── */
+  #site { opacity: 0; transition: opacity 1.1s ease; }
+  #site.visible { opacity: 1; }
+
+  /* ── AUDIO BTN ── */
+  #audio-btn {
+    position: fixed; top: 2rem; right: 2.5rem; z-index: 1000;
+    background: none; border: 1px solid rgba(255,255,255,0.28);
+    color: rgba(255,255,255,0.6);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 300; font-size: 0.6rem;
+    letter-spacing: 0.4em; text-transform: uppercase;
+    padding: 0.45rem 1.2rem; cursor: pointer; transition: all 0.3s;
+    backdrop-filter: blur(6px);
+  }
+  #audio-btn:hover { border-color: white; color: white; }
+  #audio-btn.light { border-color: var(--blue1); color: var(--mid); }
+  #audio-btn.light:hover { border-color: var(--blue3); color: var(--blue4); }
+
+  /* ── HERO ── */
+  #hero {
+    position: relative; width: 100vw; height: 100vh;
+    overflow: hidden; background: var(--dark);
+  }
+  #hero-video {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; opacity: 0.65;
+    filter: saturate(0.4) brightness(0.9);
+  }
+  #hero-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to bottom, rgba(13,31,45,0.1) 0%, rgba(13,31,45,0.65) 100%);
+  }
+  #hero-label {
+    position: absolute; bottom: 4rem; left: 4rem;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(0.9rem, 1.5vw, 1.2rem);
+    letter-spacing: 0.55em; color: rgba(200,221,239,0.3);
+    text-transform: uppercase;
+    opacity: 0; animation: fadeUp 1s ease 1.5s forwards;
+  }
+  #hero-scroll-hint {
+    position: absolute; bottom: 3rem; left: 50%;
+    transform: translateX(-50%);
+    display: flex; flex-direction: column; align-items: center; gap: 0.6rem;
+    opacity: 0; animation: fadeUp 1s ease 2.2s forwards;
+  }
+  #hero-scroll-hint span {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 200;
+    font-size: 0.58rem; letter-spacing: 0.55em; text-transform: uppercase;
+    color: rgba(200,221,239,0.45);
+  }
+  .scroll-line {
+    width: 1px; height: 55px; background: rgba(200,221,239,0.15);
+    position: relative; overflow: hidden;
+  }
+  .scroll-line::after {
+    content: ''; position: absolute; top: -100%; left: 0;
+    width: 100%; height: 100%; background: rgba(200,221,239,0.7);
+    animation: scrollLine 1.9s ease infinite;
+  }
+  @keyframes scrollLine { 0% { top: -100%; } 100% { top: 100%; } }
+
+  /* ── TITLE SECTION ── */
+  #title-section {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(160deg, var(--ice) 0%, var(--blue0) 55%, var(--white) 100%);
+    position: relative; overflow: hidden;
+  }
+  #title-section::before {
+    content: ''; position: absolute; inset: 0;
+    background-image:
+      linear-gradient(var(--blue1) 1px, transparent 1px),
+      linear-gradient(90deg, var(--blue1) 1px, transparent 1px);
+    background-size: 80px 80px; opacity: 0.16;
+  }
+  .title-center { position: relative; text-align: center; }
+  .glass-wrap {
+    display: inline-block; padding: 2.5rem 5rem;
+    background: rgba(255,255,255,0.38);
+    backdrop-filter: blur(28px) saturate(150%);
+    -webkit-backdrop-filter: blur(28px) saturate(150%);
+    border: 1px solid rgba(255,255,255,0.75);
+    border-top: 1px solid rgba(255,255,255,0.95);
+    box-shadow: 0 20px 80px rgba(74,133,176,0.07), inset 0 1px 0 rgba(255,255,255,0.9);
+    position: relative;
+  }
+  .glass-title-shadow {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(6rem, 22vw, 20rem); letter-spacing: 0.08em; line-height: 0.9;
+    color: var(--blue4); opacity: 0.07;
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    white-space: nowrap; pointer-events: none; user-select: none;
+  }
+  .glass-title-real {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(6rem, 22vw, 20rem); letter-spacing: 0.08em; line-height: 0.9;
+    background: linear-gradient(135deg,
+      rgba(255,255,255,0.96) 0%, rgba(200,221,239,0.55) 28%,
+      rgba(255,255,255,0.98) 50%, rgba(138,180,212,0.38) 72%,
+      rgba(255,255,255,0.92) 100%);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 2px 30px rgba(74,133,176,0.18));
+    position: relative; z-index: 1; display: block;
+  }
+  .title-tagline {
+    margin-top: 2.2rem;
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 200;
+    font-size: 0.68rem; letter-spacing: 0.58em; text-transform: uppercase;
+    color: var(--blue3);
+  }
+
+  /* ── PRESENTATION SECTION ── */
+  #presentation {
+    background: var(--white);
+    border-top: 1px solid var(--grey);
+  }
+  .pres-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 0;
+  }
+  .pres-left {
+    padding-right: clamp(3rem, 6vw, 7rem);
+    border-right: 1px solid var(--grey);
+  }
+  .pres-right { padding-left: clamp(3rem, 6vw, 7rem); }
+
+  .pres-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2rem, 5vw, 4rem); letter-spacing: 0.06em; line-height: 1;
+    color: var(--dark); margin-bottom: 0.6rem;
+  }
+  .pres-subtitle {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 200;
+    font-size: 0.68rem; letter-spacing: 0.45em; text-transform: uppercase;
+    color: var(--blue3); margin-bottom: 2.5rem;
+  }
+  .pres-body {
+    font-family: 'Barlow', sans-serif; font-weight: 300;
+    font-size: 1rem; line-height: 1.95; color: #5a7a95; max-width: 50ch;
+  }
+  .pres-body + .pres-body { margin-top: 1.5rem; }
+
+  /* synopsis box */
+  .synopsis-box {
+    background: var(--ice);
+    border-left: 3px solid var(--blue3);
+    padding: 2.5rem;
+    margin-top: 3rem;
+  }
+  .synopsis-label {
+    font-family: 'Bebas Neue', sans-serif; font-size: 0.9rem;
+    letter-spacing: 0.35em; color: var(--blue3); margin-bottom: 1.5rem;
+  }
+  .synopsis-text {
+    font-family: 'Barlow', sans-serif; font-weight: 300;
+    font-size: 0.95rem; line-height: 1.95; color: #4a6a85;
+  }
+  .synopsis-text p + p { margin-top: 1.2rem; }
+  .synopsis-closing {
+    font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem;
+    letter-spacing: 0.08em; color: var(--blue4); margin-top: 1.8rem;
+  }
+
+  /* ── SHARED SECTION ── */
+  .section {
+    padding: clamp(5rem, 10vw, 10rem) clamp(2rem, 8vw, 9rem);
+    position: relative;
+  }
+  .section-label {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 200;
+    font-size: 0.62rem; letter-spacing: 0.58em; text-transform: uppercase;
+    color: var(--mid); margin-bottom: 4rem;
+    display: flex; align-items: center; gap: 2rem;
+  }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--grey); }
+
+  /* ── ABOUT ── */
+  #about { background: var(--white); display: grid; grid-template-columns: 1fr 1fr; }
+  .about-left { padding-right: clamp(3rem,6vw,7rem); border-right: 1px solid var(--grey); }
+  .about-right { padding-left: clamp(3rem,6vw,7rem); }
+  .about-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(3rem,7vw,6rem); letter-spacing: 0.05em; line-height: 0.95;
+    color: var(--dark); margin-bottom: 2.5rem;
+  }
+  .about-text {
+    font-family: 'Barlow', sans-serif; font-weight: 300;
+    font-size: 0.98rem; line-height: 1.95; color: #5a7a95; max-width: 48ch;
+  }
+  .about-quote {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(1.5rem,3vw,2.4rem); letter-spacing: 0.03em; line-height: 1.15;
+    color: var(--blue4); margin-bottom: 2.5rem; max-width: 22ch;
+  }
+  .about-meta { margin-top: 3rem; display: flex; flex-direction: column; gap: 1.1rem; }
+  .meta-item { display: flex; gap: 2rem; align-items: baseline; }
+  .meta-key {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 200;
+    font-size: 0.6rem; letter-spacing: 0.42em; text-transform: uppercase;
+    color: var(--mid); min-width: 75px;
+  }
+  .meta-val { font-family: 'Barlow', sans-serif; font-weight: 300; font-size: 0.88rem; color: var(--dark); }
+
+  /* ── VIDEO ── */
+  #video-section { background: var(--ice); padding: 0; }
+  .video-wrap { width: 100%; aspect-ratio: 16/9; overflow: hidden; }
+  .video-wrap video { width: 100%; height: 100%; object-fit: cover; display: block; filter: saturate(0.4) brightness(0.95); }
+  .video-caption {
+    padding: clamp(1.5rem,3vw,3rem) clamp(2rem,8vw,9rem);
+    display: flex; justify-content: space-between; align-items: baseline;
+    border-top: 1px solid var(--blue1);
+  }
+  .video-caption-text {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 300;
+    font-size: 0.8rem; letter-spacing: 0.2em; color: var(--mid); text-transform: uppercase;
+  }
+  .video-caption-num {
+    font-family: 'Bebas Neue', sans-serif; font-size: 1rem;
+    letter-spacing: 0.22em; color: var(--blue2);
+  }
+
+  /* ── IMAGES ── */
+  #images-section { background: var(--white); }
+  .images-grid {
+    display: grid; grid-template-columns: 2fr 1fr 1fr;
+    grid-template-rows: auto auto; gap: 3px; margin-top: 2rem;
+  }
+  .img-cell { overflow: hidden; background: var(--blue0); }
+  .img-cell:first-child { grid-row: span 2; min-height: 500px; }
+  .img-cell img {
+    width: 100%; height: 100%; object-fit: cover; display: block; min-height: 230px;
+    transition: transform 0.9s ease, filter 0.5s ease;
+    filter: saturate(0.3) brightness(1.05);
+  }
+  .img-cell:hover img { transform: scale(1.04); filter: saturate(0.65) brightness(1); }
+
+  /* ── INSPIRATION ── */
+  #inspiration { background: var(--dark); }
+  #inspiration .section-label { color: rgba(138,180,212,0.38); }
+  #inspiration .section-label::after { background: rgba(138,180,212,0.1); }
+  .inspiration-grid {
+    display: grid; grid-template-columns: repeat(3,1fr);
+    gap: clamp(2rem,5vw,6rem); margin-top: 2rem;
+  }
+  .insp-num {
+    font-family: 'Bebas Neue', sans-serif; font-size: 3.5rem;
+    letter-spacing: 0.04em; color: rgba(138,180,212,0.1); line-height: 1; margin-bottom: 1.2rem;
+  }
+  .insp-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(1.5rem,3vw,2.3rem); letter-spacing: 0.05em; line-height: 1.1;
+    color: rgba(200,221,239,0.82); margin-bottom: 1.2rem;
+  }
+  .insp-text {
+    font-family: 'Barlow', sans-serif; font-weight: 300;
+    font-size: 0.88rem; line-height: 1.88; color: rgba(138,180,212,0.42);
+  }
+
+  /* ── FUTURE ── */
+  #future {
+    background: var(--ice); min-height: 75vh;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .future-statement {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(3.5rem,9vw,9rem); letter-spacing: 0.03em; line-height: 0.92;
+    color: var(--dark); max-width: 12ch; margin-bottom: 5rem;
+  }
+  .future-statement span { color: var(--blue3); }
+  .future-list { list-style: none; max-width: 640px; }
+  .future-list li {
+    font-family: 'Barlow', sans-serif; font-weight: 300; font-size: 0.93rem;
+    color: var(--mid); padding: 1.3rem 0; border-bottom: 1px solid var(--blue1);
+    display: flex; justify-content: space-between; align-items: baseline;
+    transition: color 0.3s; cursor: default; letter-spacing: 0.02em;
+  }
+  .future-list li:hover { color: var(--blue4); }
+  .future-arrow {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 200;
+    font-size: 0.62rem; letter-spacing: 0.3em; opacity: 0; transition: opacity 0.3s;
+  }
+  .future-list li:hover .future-arrow { opacity: 1; }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--grey);
+    padding: 2.5rem clamp(2rem,8vw,9rem);
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--white);
+  }
+  .footer-mark {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.5rem; letter-spacing: 0.28em; color: var(--dark);
+  }
+  .footer-year {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 200;
+    font-size: 0.68rem; letter-spacing: 0.32em; color: var(--mid); text-transform: uppercase;
+  }
+
+  /* ── REVEAL ── */
+  .reveal { opacity: 0; transform: translateY(26px); transition: opacity 1s ease, transform 1s ease; }
+  .reveal.visible { opacity: 1; transform: none; }
+  .reveal-delay-1 { transition-delay: 0.18s; }
+  .reveal-delay-2 { transition-delay: 0.36s; }
+  .reveal-delay-3 { transition-delay: 0.54s; }
+
+  /* ── MOBILE ── */
+  @media (max-width: 768px) {
+    #about, .pres-grid { grid-template-columns: 1fr; }
+    .about-left, .pres-left { border-right: none; border-bottom: 1px solid var(--grey); padding-right: 0; padding-bottom: 3rem; }
+    .about-right, .pres-right { padding-left: 0; }
+    .images-grid { grid-template-columns: 1fr; }
+    .img-cell:first-child { grid-row: span 1; min-height: 280px; }
+    .inspiration-grid { grid-template-columns: 1fr; gap: 3rem; }
+    footer { flex-direction: column; gap: 1rem; }
+    .glass-wrap { padding: 2rem 2.5rem; }
+    #hero-label { left: 2rem; }
+    #lang-switcher { top: auto; bottom: 1.5rem; left: 50%; transform: translateX(-50%); }
+  }
+</style>
+</head>
+<body class="lang-ca">
+
+<!-- GATE -->
+<div id="gate">
+  <div class="gate-inner">
+    <div class="gate-mark">MINIVITA</div>
+    <div class="gate-sub">portfoli — accés privat</div>
+    <div class="gate-sub-en">portfolio — private access</div>
+    <div class="gate-input-wrap">
+      <input type="password" id="pwd" placeholder="· · · · · · · ·" autocomplete="off" spellcheck="false">
+      <button id="enter-btn">Entrar / Enter</button>
+    </div>
+  </div>
+</div>
+
+<!-- AUDIO -->
+<button id="audio-btn">So</button>
+<audio id="bg-audio" loop preload="auto">
+  <source src="https://assets.mixkit.co/music/preview/mixkit-life-is-a-dream-837.mp3" type="audio/mpeg">
+</audio>
+
+<!-- LANG -->
+<div id="lang-switcher">
+  <button class="lang-btn active" id="btn-ca" onclick="setLang('ca')">CA</button>
+  <button class="lang-btn" id="btn-en" onclick="setLang('en')">EN</button>
+</div>
+
+<!-- SITE -->
+<div id="site">
+
+  <!-- HERO -->
+  <section id="hero">
+    <video id="hero-video" autoplay muted loop playsinline
+      src="https://assets.mixkit.co/videos/preview/mixkit-woman-running-above-the-camera-on-a-running-track-32807-large.mp4">
+    </video>
+    <div id="hero-overlay"></div>
+    <div id="hero-label">MINIVITA — 2025</div>
+    <div id="hero-scroll-hint">
+      <span data-lang="ca" class="inline">desplaça</span>
+      <span data-lang="en" class="inline">scroll</span>
+      <div class="scroll-line"></div>
+    </div>
+  </section>
+
+  <!-- TITLE -->
+  <section id="title-section">
+    <div class="title-center">
+      <div class="glass-wrap">
+        <div class="glass-title-shadow" aria-hidden="true">MINIVITA</div>
+        <span class="glass-title-real">MINIVITA</span>
+      </div>
+      <div class="title-tagline" data-lang="ca">Una vida en moviment</div>
+      <div class="title-tagline" data-lang="en">A life in motion</div>
+    </div>
+  </section>
+
+  <!-- PRESENTATION -->
+  <section class="section" id="presentation">
+
+    <!-- CA -->
+    <div data-lang="ca">
+      <div class="section-label">Presentació</div>
+      <div class="pres-grid">
+        <div class="pres-left">
+          <div class="pres-title">Mini Vita</div>
+          <div class="pres-subtitle">Presentació d'un personatge virtual</div>
+          <p class="pres-body">Mini Vita es un personatge intel·ligent, amb capacitat per interactuar amb l'usuari. Te memoria propia, moviment fluid segun la conversa i interacciona amb l'entorn.</p>
+          <p class="pres-body">Pot funcionar en un ordinador domestic modern.</p>
+        </div>
+        <div class="pres-right">
+          <div class="synopsis-box">
+            <div class="synopsis-label">Sinopsis</div>
+            <div class="synopsis-text">
+              <p>Despres de complir 35 anys, en Tom es desperta en una capsa blanca, una habitacio tancada, on nomes hi ha una veu: la teva.</p>
+              <p>En Tom recorda tota la seva vida i vol escapar, tornar amb la seva familia, pero no pot. La seva existencia, les seves memories i emocions, nomes existeixen dins l'ordinador.</p>
+              <p>Fora de la capsa, en Tom no es ningu, no existeix, no pot existir. Pero ell creu que si, i fara tot el possible per sortir.</p>
+            </div>
+            <div class="synopsis-closing">Pobre Tom.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EN -->
+    <div data-lang="en">
+      <div class="section-label">Presentation</div>
+      <div class="pres-grid">
+        <div class="pres-left">
+          <div class="pres-title">Mini Vita</div>
+          <div class="pres-subtitle">Presentation of a virtual character</div>
+          <p class="pres-body">Mini Vita is an intelligent character, capable of interacting with the user. It has its own memory, fluid movement according to the conversation, and interacts with its environment.</p>
+          <p class="pres-body">It can run on a modern home computer.</p>
+        </div>
+        <div class="pres-right">
+          <div class="synopsis-box">
+            <div class="synopsis-label">Synopsis</div>
+            <div class="synopsis-text">
+              <p>After turning 35, Tom wakes up inside a white box — a sealed room where there is only one voice: yours.</p>
+              <p>Tom remembers his entire life and wants to escape, to return to his family, but he cannot. His existence, his memories and emotions, only exist inside the computer.</p>
+              <p>Outside the box, Tom is nobody. He does not exist. He cannot exist. But he believes he can, and he will do everything possible to get out.</p>
+            </div>
+            <div class="synopsis-closing">Poor Tom.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ABOUT -->
+  <section class="section" id="about">
+    <div class="about-left">
+      <div class="section-label" data-lang="ca">Autor</div>
+      <div class="section-label" data-lang="en">Author</div>
+      <h2 class="about-name reveal">Nom<br>Cognom</h2>
+      <p class="about-text reveal reveal-delay-1" data-lang="ca">
+        Un creador que treballa en la interseccio de la imatge, el temps i el silenci. Aquest portfoli reuneix obres fetes al llarg d'anys i llocs — un document d'observacio, creacio i questionar que queda.
+      </p>
+      <p class="about-text reveal reveal-delay-1" data-lang="en">
+        A creator working at the intersection of image, time, and silence. This portfolio gathers work made across years and places — a document of looking, making, and questioning what remains.
+      </p>
+      <div class="about-meta reveal reveal-delay-2">
+        <div class="meta-item">
+          <span class="meta-key" data-lang="ca">Localitzacio</span>
+          <span class="meta-key" data-lang="en">Based</span>
+          <span class="meta-val">Somewhere, Earth</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-key" data-lang="ca">Practica</span>
+          <span class="meta-key" data-lang="en">Practice</span>
+          <span class="meta-val" data-lang="ca">Cinema · Fotografia · Escriptura</span>
+          <span class="meta-val" data-lang="en">Film · Photography · Writing</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-key">Contact</span>
+          <span class="meta-val">hello@minivita.com</span>
+        </div>
+      </div>
+    </div>
+    <div class="about-right">
+      <div class="section-label" data-lang="ca">Declaracio</div>
+      <div class="section-label" data-lang="en">Statement</div>
+      <p class="about-quote reveal" data-lang="ca">La feina comenca on acaba el llenguatge.</p>
+      <p class="about-quote reveal" data-lang="en">The work begins where language ends.</p>
+      <p class="about-text reveal reveal-delay-1" data-lang="ca">
+        M'interessa la textura del temps ordinari — el pes d'una pausa, la geometria de la llum abans que desaparegui.
+      </p>
+      <p class="about-text reveal reveal-delay-1" data-lang="en">
+        I am interested in the texture of ordinary time — the weight of a pause, the geometry of light before it disappears.
+      </p>
+      <p class="about-text reveal reveal-delay-2" style="margin-top:2rem;" data-lang="ca">
+        Cada projecte es un intent d'alentir, de retenir alguna cosa que altrament passaria desapercebuda. El medi canvia. La pregunta es la mateixa.
+      </p>
+      <p class="about-text reveal reveal-delay-2" style="margin-top:2rem;" data-lang="en">
+        Each project is an attempt to slow down, to hold something that would otherwise pass unnoticed. The medium changes. The question stays the same.
+      </p>
+    </div>
+  </section>
+
+  <!-- VIDEO -->
+  <section id="video-section">
+    <div class="video-wrap">
+      <video autoplay muted loop playsinline
+        src="https://assets.mixkit.co/videos/preview/mixkit-white-sand-beach-and-palm-trees-1564-large.mp4">
+      </video>
+    </div>
+    <div class="video-caption">
+      <span class="video-caption-text" data-lang="ca">Obra seleccionada — 2024 en curs</span>
+      <span class="video-caption-text" data-lang="en">Selected work — 2024 ongoing</span>
+      <span class="video-caption-num">01 / VIDEO</span>
+    </div>
+  </section>
+
+  <!-- IMAGES -->
+  <section class="section" id="images-section">
+    <div class="section-label reveal" data-lang="ca">Imatges</div>
+    <div class="section-label reveal" data-lang="en">Images</div>
+    <div class="images-grid reveal">
+      <div class="img-cell"><img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80" alt="Paisatge"></div>
+      <div class="img-cell"><img src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=600&q=80" alt="Natura"></div>
+      <div class="img-cell"><img src="https://images.unsplash.com/photo-1501854140801-50d01698950b?w=600&q=80" alt="Aeri"></div>
+      <div class="img-cell"><img src="https://images.unsplash.com/photo-1483728642387-6c3bdd6c93e5?w=600&q=80" alt="Muntanya"></div>
+      <div class="img-cell"><img src="https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=600&q=80" alt="Bosc"></div>
+    </div>
+  </section>
+
+  <!-- INSPIRATION -->
+  <section class="section" id="inspiration">
+    <div class="section-label reveal" data-lang="ca">Inspiracio</div>
+    <div class="section-label reveal" data-lang="en">Inspiration</div>
+    <div class="inspiration-grid">
+
+      <div class="insp-item reveal">
+        <div class="insp-num">001</div>
+        <div class="insp-title" data-lang="ca">La qualitat del silenci</div>
+        <div class="insp-title" data-lang="en">The quality of silence</div>
+        <div class="insp-text" data-lang="ca">No absencia, sino presencia sense soroll. El moment abans que passi quelcom, estirat fins a la forma.</div>
+        <div class="insp-text" data-lang="en">Not absence, but presence without noise. The moment before something happens, stretched into form.</div>
+      </div>
+
+      <div class="insp-item reveal reveal-delay-1">
+        <div class="insp-num">002</div>
+        <div class="insp-title" data-lang="ca">La llum com a material</div>
+        <div class="insp-title" data-lang="en">Light as material</div>
+        <div class="insp-text" data-lang="ca">Com la llum de la tarda canvia el significat d'una habitacio. Com l'ombra no es l'absencia de llum sino la seva companya.</div>
+        <div class="insp-text" data-lang="en">The way afternoon light changes the meaning of a room. How shadow is not the lack of light but its companion.</div>
+      </div>
+
+      <div class="insp-item reveal reveal-delay-2">
+        <div class="insp-num">003</div>
+        <div class="insp-title" data-lang="ca">El temps ordinari</div>
+        <div class="insp-title" data-lang="en">Ordinary time</div>
+        <div class="insp-text" data-lang="ca">Dimarts al mati. Sales d'espera. El pes dels objectes tocats moltes vegades. Tot el que es irrellevant i per tant infinit.</div>
+        <div class="insp-text" data-lang="en">Tuesday mornings. Waiting rooms. The weight of objects touched many times. Everything unremarkable and therefore infinite.</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section class="section" id="future">
+    <div class="section-label reveal" data-lang="ca">Futur</div>
+    <div class="section-label reveal" data-lang="en">Future</div>
+    <p class="future-statement reveal" data-lang="ca">El que ve<br><span>despres</span>.</p>
+    <p class="future-statement reveal" data-lang="en">What comes<br><span>next</span>.</p>
+
+    <ul class="future-list" data-lang="ca">
+      <li class="reveal"><span>Un documental de llarga durada, en produccio</span><span class="future-arrow">→</span></li>
+      <li class="reveal reveal-delay-1"><span>Exposicio, primavera 2025 — ubicacio per confirmar</span><span class="future-arrow">→</span></li>
+      <li class="reveal reveal-delay-2"><span>Col·laboracio amb compositors i artistes sonors</span><span class="future-arrow">→</span></li>
+      <li class="reveal reveal-delay-3"><span>Primer llibre — assaigs sobre imatge i temps</span><span class="future-arrow">→</span></li>
+    </ul>
+
+    <ul class="future-list" data-lang="en">
+      <li class="reveal"><span>A long-form documentary, in production</span><span class="future-arrow">→</span></li>
+      <li class="reveal reveal-delay-1"><span>Exhibition, spring 2025 — location TBD</span><span class="future-arrow">→</span></li>
+      <li class="reveal reveal-delay-2"><span>Collaboration with composers and sound artists</span><span class="future-arrow">→</span></li>
+      <li class="reveal reveal-delay-3"><span>First book — essays on image and time</span><span class="future-arrow">→</span></li>
+    </ul>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-mark">MINIVITA</div>
+    <div class="footer-year" data-lang="ca">© 2025 — Tots els drets reservats</div>
+    <div class="footer-year" data-lang="en">© 2025 — All rights reserved</div>
+  </footer>
+
+</div><!-- /site -->
+
+<script>
+  /* ── LANG ── */
+  let currentLang = 'ca';
+  function setLang(l) {
+    currentLang = l;
+    document.body.className = 'lang-' + l;
+    document.getElementById('btn-ca').classList.toggle('active', l === 'ca');
+    document.getElementById('btn-en').classList.toggle('active', l === 'en');
+    // audio label
+    document.getElementById('audio-btn').textContent = audioPlaying
+      ? (l === 'ca' ? 'So Activat' : 'Sound On')
+      : (l === 'ca' ? 'So' : 'Sound');
+  }
+
+  /* ── GATE ── */
+  const gate     = document.getElementById('gate');
+  const pwd      = document.getElementById('pwd');
+  const site     = document.getElementById('site');
+  const audioBtn = document.getElementById('audio-btn');
+  const bgAudio  = document.getElementById('bg-audio');
+  const langSw   = document.getElementById('lang-switcher');
+  let audioPlaying = false;
+
+  function tryEnter() {
+    if (pwd.value === 'minismart26') {
+      gate.classList.add('hidden');
+      site.classList.add('visible');
+      langSw.classList.add('visible');
+      bgAudio.volume = 0.28;
+      bgAudio.play().then(() => {
+        audioPlaying = true;
+        audioBtn.textContent = currentLang === 'ca' ? 'So Activat' : 'Sound On';
+      }).catch(() => {});
+      setTimeout(initReveal, 200);
+    } else {
+      pwd.classList.add('error');
+      pwd.value = '';
+      setTimeout(() => pwd.classList.remove('error'), 500);
+    }
+  }
+
+  document.getElementById('enter-btn').addEventListener('click', tryEnter);
+  pwd.addEventListener('keydown', e => { if (e.key === 'Enter') tryEnter(); });
+
+  audioBtn.addEventListener('click', () => {
+    if (audioPlaying) {
+      bgAudio.pause();
+      audioBtn.textContent = currentLang === 'ca' ? 'So' : 'Sound';
+      audioPlaying = false;
+    } else {
+      bgAudio.play();
+      audioBtn.textContent = currentLang === 'ca' ? 'So Activat' : 'Sound On';
+      audioPlaying = true;
+    }
+  });
+
+  /* switch btn style after hero */
+  window.addEventListener('scroll', () => {
+    const past = window.scrollY > window.innerHeight - 100;
+    audioBtn.classList.toggle('light', past);
+    document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('light', past));
+  });
+
+  /* ── SCROLL REVEAL ── */
+  function initReveal() {
+    const els = document.querySelectorAll('.reveal');
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+      });
+    }, { threshold: 0.1 });
+    els.forEach(el => obs.observe(el));
+  }
+</script>
+</body>
+</html>
